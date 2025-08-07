@@ -212,9 +212,8 @@ export default function AdminAppointments() {
                       <p className="text-sm font-medium text-gray-900 mb-1">Reason for Appointment:</p>
                       <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{appointment.reason}</p>
                     </div>
-
                     <div className="text-xs text-gray-500">
-                      Submitted on {new Date(appointment.createdAt).toLocaleDateString()}
+                      Submitted on {appointment.createdAt ? new Date(appointment.createdAt).toLocaleDateString() : 'N/A'}
                     </div>
                   </div>
 
