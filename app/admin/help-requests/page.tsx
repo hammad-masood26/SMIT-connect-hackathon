@@ -128,41 +128,37 @@ export default function AdminHelpRequests() {
           <div className="flex space-x-2 bg-white p-1 rounded-lg shadow-sm">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                filter === 'all'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${filter === 'all'
                   ? 'bg-saylani-blue text-white'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               All ({helpRequests.length})
             </button>
             <button
               onClick={() => setFilter('pending')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                filter === 'pending'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${filter === 'pending'
                   ? 'bg-yellow-500 text-white'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               Pending ({helpRequests.filter(h => h.status === 'pending').length})
             </button>
             <button
               onClick={() => setFilter('approved')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                filter === 'approved'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${filter === 'approved'
                   ? 'bg-green-500 text-white'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               Approved ({helpRequests.filter(h => h.status === 'approved').length})
             </button>
             <button
               onClick={() => setFilter('rejected')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                filter === 'rejected'
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${filter === 'rejected'
                   ? 'bg-red-500 text-white'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               Rejected ({helpRequests.filter(h => h.status === 'rejected').length})
             </button>
@@ -178,7 +174,7 @@ export default function AdminHelpRequests() {
             <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Help Requests</h3>
             <p className="text-gray-600">
-              {filter === 'all' 
+              {filter === 'all'
                 ? 'No help requests have been submitted yet.'
                 : `No ${filter} help requests found.`
               }
@@ -202,7 +198,7 @@ export default function AdminHelpRequests() {
                         <span>{request.type}</span>
                       </span>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div className="flex items-center space-x-2">
                         <UserIcon className="h-4 w-4 text-gray-400" />
@@ -211,7 +207,7 @@ export default function AdminHelpRequests() {
                           <p className="text-xs text-gray-500">Name</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <Phone className="h-4 w-4 text-gray-400" />
                         <div>
@@ -220,17 +216,17 @@ export default function AdminHelpRequests() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="mb-4">
                       <p className="text-sm font-medium text-gray-900 mb-1">Description:</p>
                       <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{request.description}</p>
                     </div>
-                    
                     <div className="text-xs text-gray-500">
-                      Submitted on {new Date(request.createdAt).toLocaleDateString()}
+                      Submitted on {request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'N/A'}
                     </div>
+
                   </div>
-                  
+
                   {request.status === 'pending' && (
                     <div className="flex flex-col space-y-2 ml-4">
                       <button
