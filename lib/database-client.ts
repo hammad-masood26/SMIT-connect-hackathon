@@ -21,7 +21,7 @@ let mockAppointments: Appointment[] = [
     preferredDate: '2024-01-15',
     preferredTime: '10:00 AM',
     status: 'pending',
-    createdAt: new Date('2024-01-10'),
+    // createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-01-10'),
   },
   {
@@ -33,7 +33,7 @@ let mockAppointments: Appointment[] = [
     preferredDate: '2024-01-20',
     preferredTime: '2:00 PM',
     status: 'approved',
-    createdAt: new Date('2024-01-12'),
+    // createdAt: new Date('2024-01-12'),
     updatedAt: new Date('2024-01-13'),
   },
 ];
@@ -47,7 +47,7 @@ let mockHelpRequests: HelpRequest[] = [
     type: 'Health',
     description: 'Need financial help for emergency surgery',
     status: 'pending',
-    createdAt: new Date('2024-01-10'),
+    // createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-01-10'),
   },
   {
@@ -58,7 +58,7 @@ let mockHelpRequests: HelpRequest[] = [
     type: 'Food',
     description: 'Need food assistance for family of 4',
     status: 'approved',
-    createdAt: new Date('2024-01-08'),
+    // createdAt: new Date('2024-01-08'),
     updatedAt: new Date('2024-01-09'),
   },
 ];
@@ -105,7 +105,7 @@ export const createHelpRequest = async (helpRequestData: Omit<HelpRequest, 'id' 
   const newHelpRequest: HelpRequest = {
     id: `req${mockHelpRequests.length + 1}`,
     ...helpRequestData,
-    createdAt: new Date(),
+    // createdAt: new Date(),
     updatedAt: new Date(),
   };
 

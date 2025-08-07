@@ -16,8 +16,9 @@ export interface Appointment {
   preferredDate: string;
   preferredTime: string;
   status: 'pending' | 'approved' | 'rejected';
-  createdAt: Date;
+  // createdAt: Date;
   updatedAt: Date;
+    createdAt?: string
 }
 
 export interface HelpRequest {
@@ -28,8 +29,9 @@ export interface HelpRequest {
   type: 'Food' | 'Health' | 'Education' | 'Other';
   description: string;
   status: 'pending' | 'approved' | 'rejected';
-  createdAt: Date;
+  // createdAt: Date;
   updatedAt: Date;
+  createdAt?: string
 }
 
 export interface AdminStats {

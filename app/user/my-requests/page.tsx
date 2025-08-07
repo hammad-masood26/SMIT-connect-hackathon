@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUserAppointments, getUserHelpRequests } from '@/lib/database-client'
-import { Appointment, HelpRequest, User } from '@/lib/types'
-import { Calendar, Clock, FileText, Phone, User as UserIcon, CheckCircle, XCircle, Clock as ClockIcon, ArrowLeft, Heart } from 'lucide-react'
+import { getUserAppointments, getUserHelpRequests } from '@/lib/database'
+import { Appointment, HelpRequest, User as UserType } from '@/lib/types'
+import { Calendar, Heart, FileText, Phone, User, CheckCircle, XCircle, Clock, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function MyRequests() {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserType | null>(null)
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [helpRequests, setHelpRequests] = useState<HelpRequest[]>([])
   const [loading, setLoading] = useState(true)
@@ -18,29 +18,71 @@ export default function MyRequests() {
   useEffect(() => {
     const userData = localStorage.getItem('user')
     if (userData) {
-      const userObj = JSON.parse(userData)
-      setUser(userObj)
-      loadUserData(userObj.id)
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+
+      // Function to load data from localStorage
+      const loadLocalData = () => {
+        const allAppointments = JSON.parse(localStorage.getItem('appointments') || '{}')
+        const localAppointments = allAppointments[parsedUser.id] || []
+        const allHelpRequests = JSON.parse(localStorage.getItem('helpRequests') || '{}')
+        const localHelpRequests = allHelpRequests[parsedUser.id] || []
+        
+        setAppointments(localAppointments)
+        setHelpRequests(localHelpRequests)
+      }
+
+      // Initial load from localStorage
+      loadLocalData()
+
+      // Load from Firebase
+      Promise.all([
+        getUserAppointments(parsedUser.id).then((data) => {
+          setAppointments(data)
+          // Update localStorage with Firebase data
+          const allAppointments = JSON.parse(localStorage.getItem('appointments') || '{}')
+          allAppointments[parsedUser.id] = data
+          localStorage.setItem('appointments', JSON.stringify(allAppointments))
+        }).catch(() => {
+          toast.error('Failed to load appointments')
+        }),
+
+        getUserHelpRequests(parsedUser.id).then((data) => {
+          setHelpRequests(data)
+          // Update localStorage with Firebase data
+          const allHelpRequests = JSON.parse(localStorage.getItem('helpRequests') || '{}')
+          allHelpRequests[parsedUser.id] = data
+          localStorage.setItem('helpRequests', JSON.stringify(allHelpRequests))
+        }).catch(() => {
+          toast.error('Failed to load help requests')
+        })
+      ]).finally(() => {
+        setLoading(false)
+      })
+
+      // Listen for localStorage changes
+      const handleStorage = (event: StorageEvent) => {
+        if (event.key === 'appointments' || event.key === 'helpRequests') {
+          loadLocalData()
+        }
+      }
+
+      // Listen for window focus (when returning from other pages)
+      const handleFocus = () => {
+        loadLocalData()
+      }
+
+      window.addEventListener('storage', handleStorage)
+      window.addEventListener('focus', handleFocus)
+
+      return () => {
+        window.removeEventListener('storage', handleStorage)
+        window.removeEventListener('focus', handleFocus)
+      }
     } else {
       router.push('/user/login')
     }
   }, [router])
-
-  const loadUserData = async (userId: string) => {
-    try {
-      const [appointmentsData, helpRequestsData] = await Promise.all([
-        getUserAppointments(userId),
-        getUserHelpRequests(userId)
-      ])
-      setAppointments(appointmentsData)
-      setHelpRequests(helpRequestsData)
-    } catch (error) {
-      console.error('Failed to load user data:', error)
-      toast.error('Failed to load your requests')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -55,17 +97,12 @@ export default function MyRequests() {
     }
   }
 
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'status-pending'
-      case 'approved':
-        return 'status-approved'
-      case 'rejected':
-        return 'status-rejected'
-      default:
-        return 'status-pending'
-    }
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-saylani-green"></div>
+      </div>
+    )
   }
 
   if (!user) {
@@ -96,181 +133,87 @@ export default function MyRequests() {
         <div className="flex space-x-1 bg-white p-1 rounded-lg shadow-sm mb-6">
           <button
             onClick={() => setActiveTab('appointments')}
-            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-md transition-colors duration-200 ${activeTab === 'appointments'
-                ? 'bg-saylani-green text-white'
-                : 'text-gray-600 hover:text-gray-900'
-              }`}
+            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-md transition-colors duration-200 
+              ${activeTab === 'appointments' ? 'bg-saylani-green text-white' : 'text-gray-600 hover:text-gray-900'}`}
           >
             <Calendar className="h-5 w-5" />
-            <span className="font-medium">Appointments ({appointments.length})</span>
+            <span>Appointments ({appointments.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('help')}
-            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-md transition-colors duration-200 ${activeTab === 'help'
-                ? 'bg-saylani-blue text-white'
-                : 'text-gray-600 hover:text-gray-900'
-              }`}
+            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-md transition-colors duration-200
+              ${activeTab === 'help' ? 'bg-saylani-blue text-white' : 'text-gray-600 hover:text-gray-900'}`}
           >
             <Heart className="h-5 w-5" />
-            <span className="font-medium">Help Requests ({helpRequests.length})</span>
+            <span>Help Requests ({helpRequests.length})</span>
           </button>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-saylani-green"></div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Appointments Tab */}
-            {activeTab === 'appointments' && (
-              <div>
-                {appointments.length === 0 ? (
-                  <div className="card text-center py-12">
-                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Appointments</h3>
-                    <p className="text-gray-600 mb-6">You haven't booked any appointments yet.</p>
-                    <button
-                      onClick={() => router.push('/user/appointment')}
-                      className="btn-primary"
-                    >
-                      Book Appointment
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {appointments.map((appointment) => (
-                      <div key={appointment.id} className="card">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Calendar className="h-5 w-5 text-saylani-green" />
-                              <h3 className="font-semibold text-gray-900">Appointment Request</h3>
-                              <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(appointment.status)}`}>
-                                {getStatusIcon(appointment.status)}
-                                <span className="capitalize">{appointment.status}</span>
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                              <div>
-                                <span className="font-medium">Reason:</span>
-                                <p className="mt-1">{appointment.reason}</p>
-                              </div>
-                              <div>
-                                <span className="font-medium">Preferred Date & Time:</span>
-                                <p className="mt-1">{appointment.preferredDate} at {appointment.preferredTime}</p>
-                              </div>
-                            </div>
-                            <div className="mt-3 text-xs text-gray-500">
-                              Submitted on {new Date(appointment.createdAt).toLocaleDateString()}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+        {/* Requests List */}
+        <div className="space-y-4">
+          {activeTab === 'appointments' ? (
+            appointments.length === 0 ? (
+              <div className="text-center py-12">
+                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900">No Appointments</h3>
+                <p className="text-gray-500 mt-2">You haven't booked any appointments yet.</p>
               </div>
-            )}
-
-            {/* Help Requests Tab */}
-            {activeTab === 'help' && (
-              <div>
-                {helpRequests.length === 0 ? (
-                  <div className="card text-center py-12">
-                    <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Help Requests</h3>
-                    <p className="text-gray-600 mb-6">You haven't submitted any help requests yet.</p>
-                    <button
-                      onClick={() => router.push('/user/help-request')}
-                      className="btn-secondary"
-                    >
-                      Request Help
-                    </button>
+            ) : (
+              appointments.map((appointment) => (
+                <div key={appointment.id} className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="h-5 w-5 text-saylani-green" />
+                      <h3 className="font-medium text-gray-900">Appointment</h3>
+                    </div>
+                    <div className="flex items-center space-x-1 px-3 py-1 rounded-full text-sm bg-gray-100">
+                      {getStatusIcon(appointment.status)}
+                      <span className="capitalize">{appointment.status}</span>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {helpRequests.map((request) => (
-                      <div key={request.id} className="card">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Heart className="h-5 w-5 text-saylani-blue" />
-                              <h3 className="font-semibold text-gray-900">Help Request</h3>
-                              <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusClass(request.status)}`}>
-                                {getStatusIcon(request.status)}
-                                <span className="capitalize">{request.status}</span>
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                              <div>
-                                <span className="font-medium">Type:</span>
-                                <p className="mt-1">{request.type}</p>
-                              </div>
-                              <div>
-                                <span className="font-medium">Description:</span>
-                                <p className="mt-1">{request.description}</p>
-                              </div>
-                            </div>
-                            <div className="mt-3 text-xs text-gray-500">
-                              Submitted on {new Date(request.createdAt).toLocaleDateString()}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">Reason</p>
+                      <p className="font-medium">{appointment.reason}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Date & Time</p>
+                      <p className="font-medium">{appointment.preferredDate} at {appointment.preferredTime}</p>
+                    </div>
                   </div>
-                )}
+                </div>
+              ))
+            )
+          ) : (
+            helpRequests.length === 0 ? (
+              <div className="text-center py-12">
+                <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900">No Help Requests</h3>
+                <p className="text-gray-500 mt-2">You haven't submitted any help requests yet.</p>
               </div>
-            )}
-          </div>
-        )}
+            ) : (
+              helpRequests.map((request) => (
+                <div key={request.id} className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Heart className="h-5 w-5 text-saylani-blue" />
+                      <h3 className="font-medium text-gray-900">{request.type} Assistance</h3>
+                    </div>
+                    <div className="flex items-center space-x-1 px-3 py-1 rounded-full text-sm bg-gray-100">
+                      {getStatusIcon(request.status)}
+                      <span className="capitalize">{request.status}</span>
+                    </div>
+                  </div>
+                  <div className="text-sm">
+                    <p className="text-gray-500">Description</p>
+                    <p className="font-medium mt-1">{request.description}</p>
+                  </div>
+                </div>
+              ))
+            )
+          )}
+        </div>
       </main>
-
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2">
-        <div className="flex justify-around items-center">
-          <button
-            onClick={() => router.push('/user/dashboard')}
-            className="flex flex-col items-center space-y-1 py-2 px-3 rounded-lg text-gray-600 hover:text-saylani-green hover:bg-saylani-green/10 transition-colors duration-200"
-          >
-            <div className="w-5 h-5 bg-gray-400 rounded"></div>
-            <span className="text-xs font-medium">Home</span>
-          </button>
-
-          <button
-            onClick={() => router.push('/user/appointment')}
-            className="flex flex-col items-center space-y-1 py-2 px-3 rounded-lg text-gray-600 hover:text-saylani-green hover:bg-saylani-green/10 transition-colors duration-200"
-          >
-            <div className="w-5 h-5 bg-gray-400 rounded"></div>
-            <span className="text-xs font-medium">Appointment</span>
-          </button>
-
-          <button
-            onClick={() => router.push('/user/help-request')}
-            className="flex flex-col items-center space-y-1 py-2 px-3 rounded-lg text-gray-600 hover:text-saylani-green hover:bg-saylani-green/10 transition-colors duration-200"
-          >
-            <div className="w-5 h-5 bg-gray-400 rounded"></div>
-            <span className="text-xs font-medium">Help</span>
-          </button>
-
-          <button
-            onClick={() => router.push('/user/my-requests')}
-            className="flex flex-col items-center space-y-1 py-2 px-3 rounded-lg bg-saylani-green/10 text-saylani-green"
-          >
-            <FileText className="h-5 w-5" />
-            <span className="text-xs font-medium">Requests</span>
-          </button>
-
-          <button
-            onClick={() => router.push('/user/profile')}
-            className="flex flex-col items-center space-y-1 py-2 px-3 rounded-lg text-gray-600 hover:text-saylani-green hover:bg-saylani-green/10 transition-colors duration-200"
-          >
-            <div className="w-5 h-5 bg-gray-400 rounded"></div>
-            <span className="text-xs font-medium">Profile</span>
-          </button>
-        </div>
-      </nav>
     </div>
   )
-} 
+}

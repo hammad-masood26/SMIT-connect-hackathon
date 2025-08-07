@@ -1,16 +1,11 @@
 {
-  "/_not-found": "app/_not-found.js",
-  "/admin/appointments/page": "app/admin/appointments/page.js",
-  "/admin/help-requests/page": "app/admin/help-requests/page.js",
   "/page": "app/page.js",
-  "/admin/dashboard/page": "app/admin/dashboard/page.js",
-  "/admin/settings/page": "app/admin/settings/page.js",
-  "/user/appointment/page": "app/user/appointment/page.js",
-  "/user/dashboard/page": "app/user/dashboard/page.js",
-  "/user/help-request/page": "app/user/help-request/page.js",
   "/user/login/page": "app/user/login/page.js",
+  "/user/dashboard/page": "app/user/dashboard/page.js",
+  "/user/appointment/page": "app/user/appointment/page.js",
+  "/user/help-request/page": "app/user/help-request/page.js",
   "/user/my-requests/page": "app/user/my-requests/page.js",
-  "/user/profile/page": "app/user/profile/page.js",
-  "/user/settings/page": "app/user/settings/page.js",
-  "/user/signup/page": "app/user/signup/page.js"
+  "/admin/dashboard/page": "app/admin/dashboard/page.js",
+  "/admin/appointments/page": "app/admin/appointments/page.js",
+  "/admin/help-requests/page": "app/admin/help-requests/page.js"
 }

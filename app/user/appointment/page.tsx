@@ -57,30 +57,37 @@ export default function BookAppointment() {
 
     setLoading(true)
 
-    try {
-      const appointment = await createAppointment({
-        userId: user.id,
-        userName: formData.name,
-        userPhone: formData.phone,
-        reason: formData.reason,
-        preferredDate: formData.preferredDate,
-        preferredTime: formData.preferredTime,
-        status: 'pending',
-      });
+     try {
+    // Create appointment without createdAt in the initial object
+    const appointment = await createAppointment({
+      userId: user.id,
+      userName: formData.name,
+      userPhone: formData.phone,
+      reason: formData.reason,
+      preferredDate: formData.preferredDate,
+      preferredTime: formData.preferredTime,
+      status: 'pending'
+    });
 
-      // Save to localStorage for instant dashboard update
-      const allAppointments = JSON.parse(localStorage.getItem('appointments') || '{}');
-      const userAppointments = allAppointments[user.id] || [];
-      allAppointments[user.id] = [appointment, ...userAppointments];
-      localStorage.setItem('appointments', JSON.stringify(allAppointments));
-
-      toast.success('Appointment booked successfully!');
-      router.push('/user/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to book appointment');
-    } finally {
-      setLoading(false)
+    // Add createdAt when saving to localStorage
+    const appointmentWithTimestamp = {
+      ...(typeof appointment === 'object' && appointment !== null ? appointment : {}),
+      createdAt: new Date().toISOString()
     }
+
+    // Save to localStorage with timestamp
+    const allAppointments = JSON.parse(localStorage.getItem('appointments') || '{}')
+    const userAppointments = allAppointments[user.id] || []
+    allAppointments[user.id] = [appointmentWithTimestamp, ...userAppointments]
+    localStorage.setItem('appointments', JSON.stringify(allAppointments))
+
+    toast.success('Appointment booked successfully!')
+    router.push('/user/dashboard')
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to book appointment')
+  } finally {
+    setLoading(false)
+  }
   }
 
   if (!user) {

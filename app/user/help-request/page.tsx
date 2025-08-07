@@ -43,44 +43,58 @@ export default function HelpRequest() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  e.preventDefault()
 
-    if (!user) {
-      toast.error('User not found')
-      return
-    }
-
-    if (!formData.name || !formData.phone || !formData.description.trim()) {
-      toast.error('Please fill in all fields')
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      const helpRequest = await createHelpRequest({
-        userId: user.id,
-        userName: formData.name,
-        userPhone: formData.phone,
-        type: formData.type,
-        description: formData.description,
-        status: 'pending',
-      });
-
-      // Save to localStorage for instant dashboard update
-      const allHelpRequests = JSON.parse(localStorage.getItem('helpRequests') || '{}');
-      const userHelpRequests = allHelpRequests[user.id] || [];
-      allHelpRequests[user.id] = [helpRequest, ...userHelpRequests];
-      localStorage.setItem('helpRequests', JSON.stringify(allHelpRequests));
-
-      toast.success('Help request submitted!');
-      router.push('/user/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to submit help request');
-    } finally {
-      setLoading(false)
-    }
+  if (!user) {
+    toast.error('User not found')
+    return
   }
+
+  if (!formData.name || !formData.phone || !formData.description.trim()) {
+    toast.error('Please fill in all fields')
+    return
+  }
+
+  setLoading(true)
+
+  try {
+    // Create help request in Firebase
+    const helpRequestId = await createHelpRequest({
+      userId: user.id,
+      userName: formData.name,
+      userPhone: formData.phone,
+      type: formData.type,
+      description: formData.description,
+      status: 'pending'
+    });
+
+    // Create complete help request object for localStorage
+    const helpRequestWithData = {
+      id: helpRequestId,
+      userId: user.id,
+      userName: formData.name,
+      userPhone: formData.phone,
+      type: formData.type,
+      description: formData.description,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    }
+
+    // Update localStorage
+    const allHelpRequests = JSON.parse(localStorage.getItem('helpRequests') || '{}')
+    const userHelpRequests = allHelpRequests[user.id] || []
+    allHelpRequests[user.id] = [helpRequestWithData, ...userHelpRequests]
+    localStorage.setItem('helpRequests', JSON.stringify(allHelpRequests))
+
+    toast.success('Help request submitted successfully!')
+    router.push('/user/dashboard')
+  } catch (error: any) {
+    console.error('Help request error:', error)
+    toast.error(error.message || 'Failed to submit help request')
+  } finally {
+    setLoading(false)
+  }
+}
 
   if (!user) {
     return null
